@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Strike — Киберспортивный клуб</title>
+  <meta name="description" content="Neon Strike — премиальный киберспортивный клуб в Минске. Мощные ПК, турниры, комфорт." />
+  <meta name="theme-color" content="#0a0a0c" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          screens: { xs: '400px' },
+          colors: {
+            bg: '#0a0a0c',
+            panel: '#121217',
+            neon: { purple: '#a855f7', cyan: '#06b6d4' }
+          },
+          fontFamily: {
+            display: ['Orbitron', 'Inter', 'sans-serif'],
+            tech: ['Rajdhani', 'Inter', 'sans-serif'],
+            body: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Высота фиксированной шапки: единый источник для шапки и отступов разделов */
+    :root { --header-h: 3.5rem; }
+    @media (min-width: 768px) { :root { --header-h: 5rem; } }
+
+    /* ВАЖНО: scroll-behavior: smooth убран, иначе window.scrollTo(0, 0) будет не мгновенным */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      background: #0a0a0c;
+      color: #e5e7eb;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;           /* защита от горизонтального скролла */
+      width: 100%;
+    }
+    img, svg { max-width: 100%; }
+
+    /* Отступ раздела под фиксированной шапкой */
+    .pt-header      { padding-top: calc(var(--header-h) + 2.5rem); }
+    .pt-header-hero { padding-top: var(--header-h); }
+    @media (min-width: 768px) { .pt-header { padding-top: calc(var(--header-h) + 4rem); } }
+
+    /* Hero на всю видимую высоту (svh — без «прыжков» адресной строки iOS) */
+    .hero-min { min-height: 100vh; min-height: 100svh; }
+
+    /* Фоновая сетка + свечение */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image:
+        radial-gradient(60rem 30rem at 15% -10%, rgba(168,85,247,.18), transparent 60%),
+        radial-gradient(50rem 30rem at 90% 10%, rgba(6,182,212,.14), transparent 60%),
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: auto, auto, 48px 48px, 48px 48px;
+    }
+
+    /* SPA: разделы */
+    .view[hidden] { display: none !important; }
+    .view-enter { animation: fadeIn .6s ease both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+      to   { opacity: 1; transform: none; filter: none; }
+    }
+    /* На мобильных без blur — меньше глюков и нагрузки на iOS */
+    @keyframes fadeInMobile {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @media (max-width: 767px) {
+      .view-enter { animation-name: fadeInMobile; animation-duration: .45s; }
+    }
+
+    /* Неоновый текст */
+    .text-glow-purple { text-shadow: 0 0 12px rgba(168,85,247,.8), 0 0 36px rgba(168,85,247,.45); }
+    .text-glow-cyan   { text-shadow: 0 0 12px rgba(6,182,212,.8), 0 0 36px rgba(6,182,212,.45); }
+    .gradient-text {
+      background: linear-gradient(90deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    /* Навигация */
+    .nav-link { position: relative; padding: .4rem 0; transition: color .25s; }
+    .nav-link::after {
+      content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 100%;
+      background: linear-gradient(90deg, #a855f7, #06b6d4);
+      box-shadow: 0 0 10px #a855f7;
+      transform: scaleX(0); transform-origin: left; transition: transform .3s ease;
+    }
+    .nav-link:hover, .nav-link[aria-current="page"] { color: #fff; }
+    .nav-link:hover::after, .nav-link[aria-current="page"]::after { transform: scaleX(1); }
+
+    /* Кнопки */
+    .btn-neon {
+      position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      text-align: center; min-height: 3rem;
+      padding: .9rem 1.8rem; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+      box-shadow: 0 0 24px rgba(168,85,247,.5);
+      transition: transform .25s, filter .25s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-neon.cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 0 24px rgba(6,182,212,.5); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      text-align: center; min-height: 3rem; cursor: pointer;
+      padding: .8rem 1.6rem; border-radius: .5rem; border: 1px solid var(--c, #a855f7);
+      color: var(--c, #a855f7); background: rgba(255,255,255,.02);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--c, #a855f7) 40%, transparent), inset 0 0 12px color-mix(in srgb, var(--c, #a855f7) 15%, transparent);
+      transition: all .25s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Hover-эффекты только там, где есть реальный hover (на телефонах не «залипают»); :active — для касаний */
+    @media (hover: hover) {
+      .btn-neon:hover { transform: translateY(-2px); filter: brightness(1.2) drop-shadow(0 0 14px rgba(168,85,247,.9)); }
+      .btn-neon.cyan:hover { filter: brightness(1.2) drop-shadow(0 0 14px rgba(6,182,212,.9)); }
+      .btn-outline:hover {
+        color: #0a0a0c; background: var(--c, #a855f7);
+        box-shadow: 0 0 30px var(--c, #a855f7), 0 0 60px color-mix(in srgb, var(--c, #a855f7) 50%, transparent);
+        transform: translateY(-2px);
+      }
+    }
+    .btn-neon:active { filter: brightness(1.25); }
+    .btn-outline:active {
+      color: #0a0a0c; background: var(--c, #a855f7);
+      box-shadow: 0 0 24px var(--c, #a855f7);
+    }
+
+    /* Карточки */
+    .card {
+      --c: #a855f7;
+      position: relative; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)), #101015;
+      border: 1px solid rgba(255,255,255,.08); border-radius: 1rem;
+      padding: 1.5rem;                 /* p-6 на мобильных */
+      min-width: 0; max-width: 100%;
+      overflow: hidden; overflow-wrap: break-word;
+      transition: transform .35s ease, border-color .35s, box-shadow .35s;
+    }
+    @media (min-width: 640px) { .card { padding: 2rem; } }
+    .card::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .35s;
+      background: radial-gradient(24rem 14rem at 50% 0%, color-mix(in srgb, var(--c) 28%, transparent), transparent 70%);
+    }
+    .card:hover {
+      border-color: var(--c);
+      box-shadow: 0 0 0 1px var(--c), 0 0 30px color-mix(in srgb, var(--c) 55%, transparent), 0 0 80px color-mix(in srgb, var(--c) 25%, transparent);
+    }
+    .card:hover::before { opacity: 1; }
+    @media (hover: hover) { .card:hover { transform: translateY(-8px); } }
+    .card.cyan { --c: #06b6d4; }
+    .card.mix  { --c: #d946ef; }
+
+    /* Поля формы */
+    .field {
+      display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 3rem;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12);
+      border-radius: .6rem; padding: .85rem 1rem; color: #fff; outline: none; transition: all .25s;
+      font-size: 16px;                 /* 16px — iOS не зумит страницу при фокусе */
+      color-scheme: dark;
+    }
+    .field::placeholder { color: #6b7280; }
+    .field:focus { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.2), 0 0 18px rgba(6,182,212,.35); }
+    select.field option { background: #121217; }
+    /* iOS Safari: date/time имеют собственную ширину и вылезают за край */
+    input[type="date"].field, input[type="time"].field {
+      -webkit-appearance: none; appearance: none;
+    }
+    input[type="date"].field::-webkit-date-and-time-value,
+    input[type="time"].field::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
+
+    /* Бургер */
+    .burger span { display: block; height: 2px; width: 24px; background: #fff; transition: all .3s; box-shadow: 0 0 8px #a855f7; }
+    .burger span + span { margin-top: 6px; }
+    .burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+    /* Мобильное меню */
+    #mobile-menu { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .4s ease, opacity .3s ease; visibility: hidden; }
+    #mobile-menu.open { max-height: 80vh; opacity: 1; visibility: visible; }
+
+    /* Тост */
+    #toast {
+      position: fixed; left: 50%; bottom: 1rem; z-index: 100;
+      width: max-content; max-width: calc(100vw - 2rem); text-align: center;
+      transform: translate(-50%, 160%); transition: transform .4s ease;
+    }
+    #toast.show { transform: translate(-50%, 0); }
+
+    /* Мерцание точки "online" */
+    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    .dot { animation: pulse-dot 1.6s infinite; }
+
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #0a0a0c; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(#a855f7, #06b6d4); border-radius: 10px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+
+<body class="font-body min-h-screen flex flex-col">
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <!-- ===== ШАПКА ===== -->
+  <header class="fixed top-0 inset-x-0 z-50 bg-bg/80 backdrop-blur-lg border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-[var(--header-h)] flex items-center justify-between">
+      <a href="#home" class="font-display font-black text-base xs:text-lg md:text-2xl tracking-wider md:tracking-widest text-white whitespace-nowrap" aria-label="Neon Strike — на главную">
+        NEON<span class="text-neon-purple text-glow-purple">STRIKE</span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-6 lg:gap-10 font-tech font-semibold text-base lg:text-lg uppercase tracking-wider lg:tracking-widest text-gray-400" aria-label="Основная навигация">
+        <a href="#home" class="nav-link" data-route="home">Главная</a>
+        <a href="#tariffs" class="nav-link" data-route="tariffs">Тарифы</a>
+        <a href="#tournaments" class="nav-link" data-route="tournaments">Турниры</a>
+        <a href="#contacts" class="nav-link" data-route="contacts">Контакты</a>
+      </nav>
+
+      <button id="burger" class="burger md:hidden p-3 -mr-3" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <!-- Мобильное меню -->
+    <nav id="mobile-menu" class="md:hidden border-t border-white/10 bg-bg/95" aria-label="Мобильная навигация">
+      <div class="flex flex-col px-4 py-2 font-tech font-semibold text-lg uppercase tracking-wider text-gray-300">
+        <a href="#home" class="nav-link-m py-3.5 border-b border-white/5" data-route="home">Главная</a>
+        <a href="#tariffs" class="nav-link-m py-3.5 border-b border-white/5" data-route="tariffs">Тарифы</a>
+        <a href="#tournaments" class="nav-link-m py-3.5 border-b border-white/5" data-route="tournaments">Турниры</a>
+        <a href="#contacts" class="nav-link-m py-3.5" data-route="contacts">Контакты</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ===== КОНТЕНТ (SPA) ===== -->
+  <main class="flex-1 w-full min-w-0">
+
+    <!-- ГЛАВНАЯ -->
+    <section id="view-home" class="view pt-header-hero hero-min relative flex items-center overflow-hidden" hidden>
+      <div class="absolute inset-0 -z-10 bg-bg">
+        <img
+          src="https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=1920&q=80"
+          alt="Игровой ПК в неоновом свете — gaming setup"
+          class="w-full h-full object-cover opacity-50"
+          onerror="this.style.display='none'"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-bg/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-bg via-bg/50 to-transparent"></div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16 w-full min-w-0">
+        <div class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-neon-cyan/40 bg-neon-cyan/10 text-neon-cyan font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-xs sm:text-sm mb-5 sm:mb-6">
+          <span class="dot w-2 h-2 rounded-full bg-neon-cyan shadow-[0_0_10px_#06b6d4]"></span>
+          Открыто 24/7 · Минск
+        </div>
+
+        <h1 class="font-display font-black uppercase leading-[1.1] sm:leading-[1.05] text-2xl xs:text-3xl sm:text-5xl lg:text-7xl max-w-4xl break-words">
+          Твоя победа <br />
+          <span class="gradient-text text-glow-purple">начинается здесь</span>
+        </h1>
+
+        <p class="mt-5 sm:mt-6 max-w-xl text-gray-300 text-base sm:text-lg leading-relaxed">
+          Премиальный киберспортивный клуб: топовое железо, мониторы до 360 Гц и атмосфера, в которой рождаются чемпионы.
+        </p>
+
+        <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <a href="#tariffs" class="btn-neon w-full sm:w-auto">Забронировать ПК →</a>
+          <a href="#tournaments" class="btn-outline w-full sm:w-auto" style="--c:#06b6d4">Ближайшие турниры</a>
+        </div>
+
+        <dl class="mt-10 sm:mt-16 grid grid-cols-3 gap-3 sm:gap-4 max-w-xl">
+          <div class="min-w-0">
+            <dt class="font-display font-bold text-xl sm:text-3xl text-neon-purple text-glow-purple">60+</dt>
+            <dd class="text-xs sm:text-sm text-gray-400 uppercase tracking-wide sm:tracking-wider mt-1">игровых ПК</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="font-display font-bold text-xl sm:text-3xl text-neon-cyan text-glow-cyan">360Hz</dt>
+            <dd class="text-xs sm:text-sm text-gray-400 uppercase tracking-wide sm:tracking-wider mt-1">мониторы</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="font-display font-bold text-xl sm:text-3xl text-white">24/7</dt>
+            <dd class="text-xs sm:text-sm text-gray-400 uppercase tracking-wide sm:tracking-wider mt-1">без выходных</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ТАРИФЫ -->
+    <section id="view-tariffs" class="view pt-header max-w-7xl mx-auto px-4 sm:px-6 pb-16 md:pb-20 w-full min-w-0" hidden>
+      <header class="text-center max-w-2xl mx-auto mb-10 md:mb-14">
+        <p class="font-tech font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-sm sm:text-base text-neon-cyan text-glow-cyan">Выбери свой уровень</p>
+        <h2 class="font-display font-black text-2xl xs:text-3xl sm:text-5xl uppercase mt-3 break-words">Тарифы</h2>
+        <p class="text-gray-400 mt-4 text-sm sm:text-base">Чем мощнее железо — тем выше шанс на победу. Цена указана за один час игры.</p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 lg:gap-8 items-stretch">
+        <!-- Standard -->
+        <article class="card cyan p-6 flex flex-col">
+          <h3 class="font-display font-bold text-xl sm:text-2xl text-white">Standard</h3>
+          <p class="font-tech text-neon-cyan uppercase tracking-wider sm:tracking-widest mt-1">Для старта</p>
+          <div class="mt-5 sm:mt-6 flex items-baseline gap-2 flex-wrap">
+            <span class="font-display font-black text-4xl sm:text-5xl text-neon-cyan text-glow-cyan">8</span>
+            <span class="font-tech text-lg sm:text-xl text-gray-300">BYN / час</span>
+          </div>
+          <ul class="mt-5 sm:mt-6 space-y-3 text-gray-300 text-sm sm:text-base flex-1">
+            <li class="flex gap-3"><span class="text-neon-cyan shrink-0">▸</span><span class="min-w-0">Видеокарта RTX 3060</span></li>
+            <li class="flex gap-3"><span class="text-neon-cyan shrink-0">▸</span><span class="min-w-0">Монитор 165 Hz</span></li>
+            <li class="flex gap-3"><span class="text-neon-cyan shrink-0">▸</span><span class="min-w-0">Игровая мышь и клавиатура</span></li>
+            <li class="flex gap-3"><span class="text-neon-cyan shrink-0">▸</span><span class="min-w-0">Гарнитура в комплекте</span></li>
+          </ul>
+          <a href="#contacts" data-tariff="Standard — 8 BYN/час" class="btn-outline w-full mt-7 sm:mt-8" style="--c:#06b6d4">Выбрать</a>
+        </article>
+
+        <!-- Pro -->
+        <article class="card p-6 flex flex-col md:-translate-y-3">
+          <span class="absolute top-4 right-4 font-tech font-bold text-xs uppercase tracking-widest px-3 py-1 rounded-full bg-neon-purple text-white shadow-[0_0_14px_#a855f7]">Хит</span>
+          <h3 class="font-display font-bold text-xl sm:text-2xl text-white">Pro</h3>
+          <p class="font-tech text-neon-purple uppercase tracking-wider sm:tracking-widest mt-1">Для серьёзной игры</p>
+          <div class="mt-5 sm:mt-6 flex items-baseline gap-2 flex-wrap">
+            <span class="font-display font-black text-4xl sm:text-5xl text-neon-purple text-glow-purple">12</span>
+            <span class="font-tech text-lg sm:text-xl text-gray-300">BYN / час</span>
+          </div>
+          <ul class="mt-5 sm:mt-6 space-y-3 text-gray-300 text-sm sm:text-base flex-1">
+            <li class="flex gap-3"><span class="text-neon-purple shrink-0">▸</span><span class="min-w-0">Видеокарта RTX 4070</span></li>
+            <li class="flex gap-3"><span class="text-neon-purple shrink-0">▸</span><span class="min-w-0">Монитор 240 Hz</span></li>
+            <li class="flex gap-3"><span class="text-neon-purple shrink-0">▸</span><span class="min-w-0">Механическая клавиатура</span></li>
+            <li class="flex gap-3"><span class="text-neon-purple shrink-0">▸</span><span class="min-w-0">Лёгкая беспроводная мышь</span></li>
+          </ul>
+          <a href="#contacts" data-tariff="Pro — 12 BYN/час" class="btn-neon w-full mt-7 sm:mt-8">Выбрать</a>
+        </article>
+
+        <!-- VIP -->
+        <article class="card mix p-6 flex flex-col">
+          <h3 class="font-display font-bold text-xl sm:text-2xl text-white">VIP</h3>
+          <p class="font-tech uppercase tracking-wider sm:tracking-widest mt-1" style="color:#d946ef">Максимум возможностей</p>
+          <div class="mt-5 sm:mt-6 flex items-baseline gap-2 flex-wrap">
+            <span class="font-display font-black text-4xl sm:text-5xl" style="color:#d946ef;text-shadow:0 0 14px rgba(217,70,239,.8)">15</span>
+            <span class="font-tech text-lg sm:text-xl text-gray-300">BYN / час</span>
+          </div>
+          <ul class="mt-5 sm:mt-6 space-y-3 text-gray-300 text-sm sm:text-base flex-1">
+            <li class="flex gap-3"><span class="shrink-0" style="color:#d946ef">▸</span><span class="min-w-0">Видеокарта RTX 4080</span></li>
+            <li class="flex gap-3"><span class="shrink-0" style="color:#d946ef">▸</span><span class="min-w-0">Монитор 360 Hz</span></li>
+            <li class="flex gap-3"><span class="shrink-0" style="color:#d946ef">▸</span><span class="min-w-0">Эргономичное кресло премиум</span></li>
+            <li class="flex gap-3"><span class="shrink-0" style="color:#d946ef">▸</span><span class="min-w-0">Отдельная зона и напитки</span></li>
+          </ul>
+          <a href="#contacts" data-tariff="VIP — 15 BYN/час" class="btn-outline w-full mt-7 sm:mt-8" style="--c:#d946ef">Выбрать</a>
+        </article>
+      </div>
+    </section>
+
+    <!-- ТУРНИРЫ -->
+    <section id="view-tournaments" class="view pt-header max-w-5xl mx-auto px-4 sm:px-6 pb-16 md:pb-20 w-full min-w-0" hidden>
+      <header class="text-center max-w-2xl mx-auto mb-10 md:mb-14">
+        <p class="font-tech font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-sm sm:text-base text-neon-purple text-glow-purple">Докажи, кто сильнее</p>
+        <h2 class="font-display font-black text-2xl xs:text-3xl sm:text-5xl uppercase mt-3 break-words">Турниры</h2>
+        <p class="text-gray-400 mt-4 text-sm sm:text-base">Ближайшие соревнования в клубе. Количество мест ограничено.</p>
+      </header>
+
+      <div class="grid grid-cols-1 gap-4 sm:gap-5">
+        <!-- CS2 -->
+        <article class="card cyan !p-5 sm:!p-7 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 md:gap-8 items-center">
+          <div class="font-display font-black text-3xl w-20 h-20 shrink-0 rounded-xl grid place-items-center border border-neon-cyan/50 text-neon-cyan text-glow-cyan bg-neon-cyan/10">CS2</div>
+          <div class="min-w-0">
+            <h3 class="font-display font-bold text-lg sm:text-2xl text-white break-words">Neon Strike Open: Counter-Strike 2</h3>
+            <p class="text-gray-400 mt-1 text-sm sm:text-base">Формат 5×5 · Single Elimination</p>
+            <div class="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-1 font-tech text-base sm:text-lg">
+              <span class="text-gray-300">📅 <time data-days="6" data-time="18:00">—</time></span>
+              <span class="text-neon-cyan text-glow-cyan font-bold">🏆 Призовой фонд: 3 000 BYN</span>
+            </div>
+          </div>
+          <button class="btn-outline reg-btn w-full md:w-auto" style="--c:#06b6d4" data-name="CS2 Open">Зарегистрироваться</button>
+        </article>
+
+        <!-- Dota 2 -->
+        <article class="card !p-5 sm:!p-7 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 md:gap-8 items-center">
+          <div class="font-display font-black text-xl w-20 h-20 shrink-0 rounded-xl grid place-items-center border border-neon-purple/50 text-neon-purple text-glow-purple bg-neon-purple/10 text-center leading-tight">DOTA<br>2</div>
+          <div class="min-w-0">
+            <h3 class="font-display font-bold text-lg sm:text-2xl text-white break-words">Cyber Arena: Dota 2 Cup</h3>
+            <p class="text-gray-400 mt-1 text-sm sm:text-base">Формат 5×5 · Captains Mode</p>
+            <div class="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-1 font-tech text-base sm:text-lg">
+              <span class="text-gray-300">📅 <time data-days="13" data-time="16:00">—</time></span>
+              <span class="text-neon-purple text-glow-purple font-bold">🏆 Призовой фонд: 5 000 BYN</span>
+            </div>
+          </div>
+          <button class="btn-outline reg-btn w-full md:w-auto" style="--c:#a855f7" data-name="Dota 2 Cup">Зарегистрироваться</button>
+        </article>
+
+        <!-- Valorant -->
+        <article class="card mix !p-5 sm:!p-7 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 md:gap-8 items-center">
+          <div class="font-display font-black text-base w-20 h-20 shrink-0 rounded-xl grid place-items-center text-center leading-tight bg-fuchsia-500/10 border border-fuchsia-500/50" style="color:#d946ef;text-shadow:0 0 12px rgba(217,70,239,.8)">VALO<br>RANT</div>
+          <div class="min-w-0">
+            <h3 class="font-display font-bold text-lg sm:text-2xl text-white break-words">Neon Strike Valorant Showdown</h3>
+            <p class="text-gray-400 mt-1 text-sm sm:text-base">Формат 5×5 · Double Elimination</p>
+            <div class="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-1 font-tech text-base sm:text-lg">
+              <span class="text-gray-300">📅 <time data-days="20" data-time="19:00">—</time></span>
+              <span class="font-bold" style="color:#d946ef">🏆 Призовой фонд: 2 500 BYN</span>
+            </div>
+          </div>
+          <button class="btn-outline reg-btn w-full md:w-auto" style="--c:#d946ef" data-name="Valorant Showdown">Зарегистрироваться</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- КОНТАКТЫ -->
+    <section id="view-contacts" class="view pt-header max-w-7xl mx-auto px-4 sm:px-6 pb-16 md:pb-20 w-full min-w-0" hidden>
+      <header class="text-center max-w-2xl mx-auto mb-10 md:mb-14">
+        <p class="font-tech font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-sm sm:text-base text-neon-cyan text-glow-cyan">Мы на связи</p>
+        <h2 class="font-display font-black text-2xl xs:text-3xl sm:text-5xl uppercase mt-3 break-words">Контакты</h2>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <!-- Инфо -->
+        <div class="card cyan !p-6 sm:!p-8 flex flex-col gap-6">
+          <div class="flex gap-4">
+            <div class="text-2xl shrink-0" aria-hidden="true">📍</div>
+            <div class="min-w-0">
+              <h3 class="font-tech font-bold text-lg sm:text-xl uppercase tracking-wider sm:tracking-widest text-neon-cyan">Адрес</h3>
+              <p class="text-gray-200 mt-1 break-words">г. Минск, пр-т Независимости, 58</p>
+              <p class="text-gray-500 text-sm">м. Академия наук, 3 минуты пешком</p>
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <div class="text-2xl shrink-0" aria-hidden="true">📞</div>
+            <div class="min-w-0">
+              <h3 class="font-tech font-bold text-lg sm:text-xl uppercase tracking-wider sm:tracking-widest text-neon-cyan">Телефон</h3>
+              <a href="tel:+375291234567" class="text-gray-200 hover:text-neon-cyan transition mt-1 inline-block">+375 (29) 123-45-67</a>
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <div class="text-2xl shrink-0" aria-hidden="true">🕒</div>
+            <div class="min-w-0">
+              <h3 class="font-tech font-bold text-lg sm:text-xl uppercase tracking-wider sm:tracking-widest text-neon-cyan">Режим работы</h3>
+              <p class="text-gray-200 mt-1">Круглосуточно, без выходных</p>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+            <a href="https://t.me/neonstrike_minsk" target="_blank" rel="noopener noreferrer" class="btn-outline w-full sm:w-auto sm:flex-1" style="--c:#06b6d4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 2.8 11.6c-1.3.5-1.3 1.3-.2 1.6l4.9 1.5 1.9 5.8c.2.6.4.8.9.8s.7-.2 1-.5l2.4-2.3 4.9 3.6c.9.5 1.5.2 1.8-.8l3.2-15.2c.3-1.3-.5-1.900-1.700-1.400ZM9 14l9.800-6.200c.5-.3.9-.1.5.2L11.200 15.300l-.3 3.400L9 14Z"/></svg>
+              Telegram
+            </a>
+            <a href="https://instagram.com/neonstrike_minsk" target="_blank" rel="noopener noreferrer" class="btn-outline w-full sm:w-auto sm:flex-1" style="--c:#a855f7">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.500" cy="6.500" r="1" fill="currentColor"/></svg>
+              Instagram
+            </a>
+          </div>
+        </div>
+
+        <!-- Форма -->
+        <form id="booking-form" class="card !p-6 sm:!p-8 flex flex-col gap-5" novalidate>
+          <h3 class="font-display font-bold text-lg sm:text-2xl uppercase break-words">Забронировать ПК</h3>
+
+          <div class="w-full min-w-0">
+            <label for="f-name" class="block font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-sm text-gray-400 mb-2">Имя</label>
+            <input id="f-name" name="name" type="text" class="field w-full" placeholder="Как к вам обращаться" required autocomplete="name" />
+          </div>
+
+          <div class="w-full min-w-0">
+            <label for="f-phone" class="block font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-sm text-gray-400 mb-2">Телефон</label>
+            <input id="f-phone" name="phone" type="tel" class="field w-full" placeholder="+375 (__) ___-__-__" required autocomplete="tel" inputmode="tel" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="w-full min-w-0">
+              <label for="f-date" class="block font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-sm text-gray-400 mb-2">Дата</label>
+              <input id="f-date" name="date" type="date" class="field w-full" required />
+            </div>
+            <div class="w-full min-w-0">
+              <label for="f-time" class="block font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-sm text-gray-400 mb-2">Время</label>
+              <input id="f-time" name="time" type="time" class="field w-full" required />
+            </div>
+          </div>
+
+          <div class="w-full min-w-0">
+            <label for="f-tariff" class="block font-tech font-semibold uppercase tracking-wider sm:tracking-widest text-sm text-gray-400 mb-2">Тариф</label>
+            <select id="f-tariff" name="tariff" class="field w-full">
+              <option>Standard — 8 BYN/час</option>
+              <option>Pro — 12 BYN/час</option>
+              <option>VIP — 15 BYN/час</option>
+            </select>
+          </div>
+
+          <p id="form-error" class="text-sm text-red-400 hidden" role="alert"></p>
+
+          <button type="submit" class="btn-neon w-full mt-1">Отправить заявку</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== ПОДВАЛ ===== -->
+  <footer class="border-t border-white/10 py-6 px-4 text-center text-sm text-gray-500">
+    © <span id="year"></span> Neon Strike. Играй. Побеждай. Повторяй.
+  </footer>
+
+  <!-- Уведомление -->
+  <div id="toast" class="px-5 sm:px-6 py-3 rounded-lg bg-panel border border-neon-cyan text-white font-tech text-base sm:text-lg shadow-[0_0_24px_rgba(6,182,212,.6)]" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Не даём браузеру восстанавливать старую позицию скролла при «Назад/Вперёд» —
+      // иначе в SPA страница может открыться посередине нового раздела.
+      if ('scrollRestoration' in history) {
+        try { history.scrollRestoration = 'manual'; } catch (e) {}
+      }
+
+      const ROUTES = ['home', 'tariffs', 'tournaments', 'contacts'];
+      const TITLES = {
+        home: 'Neon Strike — Киберспортивный клуб',
+        tariffs: 'Тарифы — Neon Strike',
+        tournaments: 'Турниры — Neon Strike',
+        contacts: 'Контакты — Neon Strike'
+      };
+
+      const views = ROUTES.map(r => document.getElementById('view-' + r));
+      const navLinks = document.querySelectorAll('[data-route]');
+      const burger = document.getElementById('burger');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      /* ---------- Роутер на window.location.hash ---------- */
+      function getRoute() {
+        const h = window.location.hash.replace(/^#\/?/, '');
+        return ROUTES.includes(h) ? h : 'home';
+      }
+
+      function render() {
+        const route = getRoute();
+
+        views.forEach(v => {
+          const isActive = v.id === 'view-' + route;
+          v.hidden = !isActive;
+          v.classList.remove('view-enter');
+          if (isActive) {
+            void v.offsetWidth;          // перезапуск CSS-анимации
+            v.classList.add('view-enter');
+          }
+        });
+
+        navLinks.forEach(a => {
+          if (a.dataset.route === route) a.setAttribute('aria-current', 'page');
+          else a.removeAttribute('aria-current');
+          if (a.classList.contains('nav-link-m')) {
+            a.classList.toggle('text-neon-cyan', a.dataset.route === route);
+          }
+        });
+
+        document.title = TITLES[route];
+        closeMenu();
+        window.scrollTo(0, 0);           // мгновенно и надёжно, в т.ч. на iOS Safari
+      }
+
+      window.addEventListener('hashchange', render);
+      render();
+
+      /* ---------- Бургер-меню ---------- */
+      function closeMenu() {
+        mobileMenu.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+        burger.setAttribute('aria-label', 'Открыть меню');
+      }
+      burger.addEventListener('click', () => {
+        const open = mobileMenu.classList.toggle('open');
+        burger.setAttribute('aria-expanded', String(open));
+        burger.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+      window.addEventListener('resize', () => { if (window.innerWidth >= 768) closeMenu(); });
+
+      // Повторный клик по уже активному пункту — закрыть меню и вернуться наверх
+      navLinks.forEach(a => a.addEventListener('click', () => {
+        if (a.dataset.route === getRoute()) { closeMenu(); window.scrollTo(0, 0); }
+      }));
+
+      /* ---------- Уведомления ---------- */
+      const toast = document.getElementById('toast');
+      let toastTimer;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+      }
+
+      /* ---------- Тарифы → предвыбор в форме ---------- */
+      const tariffSelect = document.getElementById('f-tariff');
+      document.querySelectorAll('[data-tariff]').forEach(btn => {
+        btn.addEventListener('click', () => { tariffSelect.value = btn.dataset.tariff; });
+      });
+
+      /* ---------- Даты турниров (всегда «ближайшие») ---------- */
+      const fmt = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' });
+      document.querySelectorAll('time[data-days]').forEach(t => {
+        const d = new Date();
+        d.setDate(d.getDate() + parseInt(t.dataset.days, 10));
+        t.dateTime = d.toISOString().slice(0, 10);
+        t.textContent = fmt.format(d) + ', ' + t.dataset.time;
+      });
+
+      /* ---------- Регистрация на турнир ---------- */
+      document.querySelectorAll('.reg-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.done) return;
+          btn.dataset.done = '1';
+          btn.textContent = '✓ Вы в списке';
+          btn.style.opacity = '.8';
+          showToast('Заявка на «' + btn.dataset.name + '» принята. Мы свяжемся с вами!');
+        });
+      });
+
+      /* ---------- Форма бронирования ---------- */
+      const form = document.getElementById('booking-form');
+      const errBox = document.getElementById('form-error');
+      const dateInput = document.getElementById('f-date');
+
+      const today = new Date();
+      dateInput.min = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        const phoneDigits = (data.phone || '').replace(/\D/g, '');
+        let error = '';
+
+        if (!data.name.trim()) error = 'Введите ваше имя.';
+        else if (phoneDigits.length < 9) error = 'Введите корректный номер телефона.';
+        else if (!data.date) error = 'Выберите дату.';
+        else if (!data.time) error = 'Выберите время.';
+
+        if (error) {
+          errBox.textContent = error;
+          errBox.classList.remove('hidden');
+          return;
+        }
+        errBox.classList.add('hidden');
+        // Здесь можно отправить данные на сервер: fetch('/api/booking', { method: 'POST', body: JSON.stringify(data) })
+        console.log('Бронирование:', data);
+        form.reset();
+        showToast('Спасибо, ' + data.name.trim() + '! Бронь принята, мы перезвоним.');
+      });
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+    })();
+  </script>
+</body>
+</html>
